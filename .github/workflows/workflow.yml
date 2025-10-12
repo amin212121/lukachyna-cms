@@ -1,0 +1,65 @@
+name: Build and Deploy the Project
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout the repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Set up Node.js environment
+      # Caches npm dependencies for faster builds
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.20.0'
+          cache: 'npm'
+
+      # 3. Install dependencies
+      - name: Install Dependencies
+        run: npm ci
+
+      # 4. Build the Project
+      # The user must have the build script configured in package.json
+      - name: Build the Project
+        run: npm run build -- --experimental-build-mode compile
+
+      # 5. Deploy files to the server via rsync
+      # This action securely transfers the standalone build output
+      - name: Deploy to Server
+        uses: easingthemes/ssh-deploy@v5.1.0
+        with:
+          # SSH connection details
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          REMOTE_HOST: ${{ secrets.SSH_HOST }}
+          REMOTE_USER: ${{ secrets.SSH_USER }}
+
+          # Source and destination
+          SOURCE: ""
+          TARGET: ${{ secrets.REMOTE_PATH }}
+          EXCLUDE: "/node_modules/, /.git/, '/.github/', '/.vscode/', /src/, /.env"
+
+          # rsync options
+          ARGS: "-avz --delete"
+
+      # 6. Restart the application on the server
+      # Runs commands on the remote server to restart the app using pm2
+      - name: Restart Application
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ${{ secrets.REMOTE_PATH }}
+            echo "Installing npm dependencies for local environment..."
+            /home/amin/.nvm/versions/node/v22.20.0/bin/npm i
+            /home/amin/.nvm/versions/node/v22.20.0/bin/npm run build -- --experimental-build-mode generate
+            sudo systemctl restart lukachyna-cms.service
