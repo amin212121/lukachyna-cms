@@ -4,7 +4,7 @@ import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import React from 'react'
 import PageClient from './page.client'
-import { PostsContent, type PostItem } from './PostsContent'
+import { PublicationsContent, type PublicationItem } from './PublicationsContent'
 import type { Category } from '@/payload-types'
 
 export const dynamic = 'force-static'
@@ -13,8 +13,8 @@ export const revalidate = 600
 export default async function Page() {
   const payload = await getPayload({ config: configPromise })
 
-  const posts = await payload.find({
-    collection: 'posts',
+  const publications = await payload.find({
+    collection: 'publications',
     depth: 1,
     limit: 300,
     overrideAccess: false,
@@ -28,31 +28,31 @@ export default async function Page() {
     },
   })
 
-  const items: PostItem[] = posts.docs.map((post) => ({
-    id: String(post.id),
-    title: post.title,
-    slug: post.slug,
-    categories: (post.categories ?? [])
+  const items: PublicationItem[] = publications.docs.map((pub) => ({
+    id: String(pub.id),
+    title: pub.title,
+    slug: pub.slug ?? null,
+    categories: (pub.categories ?? [])
       .filter((c): c is Category => typeof c === 'object' && c !== null)
       .map((c) => ({ id: String(c.id), title: c.title ?? null })),
-    publishedAt: post.publishedAt ?? null,
-    populatedAuthors: (post.populatedAuthors ?? []).map((a) => ({
+    publishedAt: pub.publishedAt ?? null,
+    populatedAuthors: (pub.populatedAuthors ?? []).map((a) => ({
       id: a.id ?? '',
       name: a.name ?? null,
     })),
-    meta: post.meta ? { description: post.meta.description ?? null } : null,
+    meta: pub.meta ? { description: pub.meta.description ?? null } : null,
   }))
 
   return (
     <>
       <PageClient />
-      <PostsContent posts={items} />
+      <PublicationsContent publications={items} />
     </>
   )
 }
 
 export function generateMetadata(): Metadata {
   return {
-    title: 'Blog',
+    title: 'Publications',
   }
 }

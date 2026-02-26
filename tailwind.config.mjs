@@ -92,10 +92,12 @@ const config = {
         success: 'hsl(var(--success))',
         error: 'hsl(var(--error))',
         warning: 'hsl(var(--warning))',
+        ember: 'hsl(var(--ember))',
       },
       fontFamily: {
-        mono: ['var(--font-geist-mono)'],
-        sans: ['var(--font-geist-sans)'],
+        display: ['var(--font-display)'],
+        mono: ['var(--font-mono)'],
+        sans: ['var(--font-sans)'],
       },
       keyframes: {
         'accordion-down': {

@@ -7,7 +7,7 @@ const PageClient: React.FC = () => {
   const { setHeaderTheme } = useHeaderTheme()
 
   useEffect(() => {
-    setHeaderTheme(null)
+    setHeaderTheme('dark')
   }, [setHeaderTheme])
   return <React.Fragment />
 }

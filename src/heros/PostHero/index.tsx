@@ -3,71 +3,148 @@ import React from 'react'
 
 import type { Post } from '@/payload-types'
 
-import { Media } from '@/components/Media'
 import { formatAuthors } from '@/utilities/formatAuthors'
 
-export const PostHero: React.FC<{
-  post: Post
-}> = ({ post }) => {
-  const { categories, heroImage, populatedAuthors, publishedAt, title } = post
+function getCategoryClass(title: string | null) {
+  const t = (title ?? '').toLowerCase()
+  if (t.includes('tech')) return 'post-cat post-cat--tech'
+  if (t.includes('career')) return 'post-cat post-cat--career'
+  if (t.includes('edu')) return 'post-cat post-cat--education'
+  if (t.includes('resource')) return 'post-cat post-cat--resources'
+  return 'post-cat post-cat--default'
+}
 
-  const hasAuthors =
-    populatedAuthors && populatedAuthors.length > 0 && formatAuthors(populatedAuthors) !== ''
+export const PostHero: React.FC<{ post: Post }> = ({ post }) => {
+  const { categories, populatedAuthors, publishedAt, title } = post
+
+  const authorsStr =
+    populatedAuthors && populatedAuthors.length > 0 ? formatAuthors(populatedAuthors) : null
+
+  const firstCat =
+    categories && categories.length > 0 && typeof categories[0] === 'object'
+      ? (categories[0] as { id: number; title: string })
+      : null
 
   return (
-    <div className="relative -mt-[10.4rem] flex items-end">
-      <div className="container z-10 relative lg:grid lg:grid-cols-[1fr_48rem_1fr] text-white pb-8">
-        <div className="col-start-1 col-span-1 md:col-start-2 md:col-span-2">
-          <div className="uppercase text-sm mb-6">
-            {categories?.map((category, index) => {
-              if (typeof category === 'object' && category !== null) {
-                const { title: categoryTitle } = category
+    <>
+      <header
+        style={{
+          position: 'relative',
+          padding: '4rem 0 5.5rem',
+          overflow: 'hidden',
+          borderBottom: '1px solid var(--color-border)',
+        }}
+      >
+        <div className="page-grid-overlay" aria-hidden="true" />
 
-                const titleToUse = categoryTitle || 'Untitled category'
-
-                const isLast = index === categories.length - 1
-
-                return (
-                  <React.Fragment key={index}>
-                    {titleToUse}
-                    {!isLast && <React.Fragment>, &nbsp;</React.Fragment>}
-                  </React.Fragment>
-                )
-              }
-              return null
-            })}
-          </div>
-
-          <div className="">
-            <h1 className="mb-6 text-3xl md:text-5xl lg:text-6xl">{title}</h1>
-          </div>
-
-          <div className="flex flex-col md:flex-row gap-4 md:gap-16">
-            {hasAuthors && (
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1">
-                  <p className="text-sm">Author</p>
-
-                  <p>{formatAuthors(populatedAuthors)}</p>
-                </div>
-              </div>
+        <div className="container" style={{ position: 'relative', zIndex: 1 }}>
+          {/* Meta row */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.6rem',
+              flexWrap: 'wrap',
+              marginBottom: '2rem',
+            }}
+          >
+            {firstCat && (
+              <span className={getCategoryClass(firstCat.title)}>{firstCat.title}</span>
             )}
             {publishedAt && (
-              <div className="flex flex-col gap-1">
-                <p className="text-sm">Date Published</p>
+              <>
+                <span
+                  style={{ color: 'rgba(255,255,255,0.12)', fontSize: '0.85rem' }}
+                  aria-hidden="true"
+                >
+                  ·
+                </span>
+                <time
+                  dateTime={publishedAt}
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.63rem',
+                    letterSpacing: '0.1em',
+                    color: 'var(--color-muted)',
+                  }}
+                >
+                  {formatDateTime(publishedAt)}
+                </time>
+              </>
+            )}
+          </div>
 
-                <time dateTime={publishedAt}>{formatDateTime(publishedAt)}</time>
+          {/* Title */}
+          <h1
+            style={{
+              fontFamily: 'var(--font-display)',
+              fontSize: 'clamp(2.4rem, 6vw, 7rem)',
+              fontWeight: 900,
+              lineHeight: 0.92,
+              letterSpacing: '-0.02em',
+              textTransform: 'uppercase',
+              color: 'var(--text)',
+              marginBottom: '2.75rem',
+              maxWidth: 1000,
+            }}
+          >
+            {title}
+          </h1>
+
+          {/* Footer: author + date */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '2rem',
+            }}
+          >
+            {authorsStr && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.58rem',
+                    letterSpacing: '0.14em',
+                    textTransform: 'uppercase',
+                    color: 'var(--color-muted)',
+                  }}
+                >
+                  By
+                </span>
+                <span
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    fontSize: '0.68rem',
+                    letterSpacing: '0.1em',
+                    color: 'var(--text)',
+                  }}
+                >
+                  {authorsStr}
+                </span>
               </div>
             )}
           </div>
         </div>
-      </div>
-      <div className="min-h-[80vh] select-none">
-        {heroImage && typeof heroImage !== 'string' && (
-          <Media fill priority imgClassName="-z-10 object-cover" resource={heroImage} />
-        )}
-        <div className="absolute pointer-events-none left-0 bottom-0 w-full h-1/2 bg-gradient-to-t from-black to-transparent" />
-      </div>
-    </div>
+      </header>
+
+      <style>{`
+        .post-cat {
+          font-family: var(--font-mono), 'DM Mono', monospace;
+          font-size: 0.6rem;
+          letter-spacing: 0.14em;
+          text-transform: uppercase;
+          padding: 0.2rem 0.5rem;
+          border-radius: 2px;
+          white-space: nowrap;
+        }
+        .post-cat--tech { color: var(--color-accent); background: rgba(79,172,254,0.1); }
+        .post-cat--career { color: var(--color-ember); background: rgba(255,92,43,0.1); }
+        .post-cat--education { color: #52d18a; background: rgba(82,209,138,0.1); }
+        .post-cat--resources { color: #c084fc; background: rgba(192,132,252,0.1); }
+        .post-cat--default { color: var(--color-muted); background: var(--surface); border: 1px solid var(--color-border); }
+      `}</style>
+    </>
   )
 }
